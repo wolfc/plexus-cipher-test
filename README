@@ -1,0 +1,46 @@
+This project is about a little critique I have on the mini guide for Maven password encryption.
+
+http://maven.apache.org/guides/mini/guide-encryption.html
+
+The guide under-states the security ramification of these measures. Which I think should be explicitly stated for
+a reader to attain the desired effect.
+
+The article should stress that the 'encrypted' master password must be stored on a removable drive to attain a secure
+environment.
+
+Why do I put encrypted within quotes? Because fact of the matter is that the master password is not encrypted, but
+simply encoded.
+
+   @Test
+   public void test1() throws Exception
+   {
+      String master = "{WR51wo2sI1QHlQM0MhI7AULqJXRZvtoppQsqdg74p08=}";
+
+      DefaultPlexusCipher cipher = new DefaultPlexusCipher();
+
+      String result = cipher.decryptDecorated(master, "settings.security");
+      assertEquals("Doh!", result);
+   }
+
+This means that putting the master password in .m2/settings-security.xml would make your server password perfectly
+readable again.
+
+   @Test
+   public void test2() throws Exception
+   {
+      String master = "Doh!";
+      String pwd = "{fB3b7bF6RKUHOTcOH790i8jm4C4fIBM4BZ5UvXSTODk=}";
+
+      DefaultPlexusCipher cipher = new DefaultPlexusCipher();
+
+      String result = cipher.decryptDecorated(pwd, master);
+      assertEquals("Eeek!", result);
+   }
+
+So without introducing an external factor (like an USB key) the mechanism is just as secure as your plain password
+in .m2/settings.xml.
+
+To try this out on your own passwords, simply clone git://github.com/wolfc/plexus-cipher-test.git, mvn assembly:assembly and do:
+$ java -jar target/jboss-plexus-cipher-test-full.jar {WR51wo2sI1QHlQM0MhI7AULqJXRZvtoppQsqdg74p08=}
+$ java -jar target/jboss-plexus-cipher-test-full.jar {fB3b7bF6RKUHOTcOH790i8jm4C4fIBM4BZ5UvXSTODk=} Doh\!
+
